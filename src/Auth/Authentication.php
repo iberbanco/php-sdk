@@ -49,8 +49,8 @@ class Authentication
 
     public function generateHash(string $token, int $timestamp, string $username): string
     {
-        $data = $token . $timestamp;
-        return hash_hmac('sha256', $data, $username);
+        $data = $token . $timestamp . $username;
+        return hash('sha256', $data);
     }
 
     public function verifyHash(string $token, int $timestamp, string $username, string $providedHash): bool

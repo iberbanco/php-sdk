@@ -33,12 +33,13 @@ class AuthenticationTest extends TestCase
         
         $headers = $this->auth->generateAuthHeaders($token, $timestamp);
         
-        $this->assertArrayHasKey('Authorization', $headers);
-        $this->assertArrayHasKey('X-Timestamp', $headers);
-        $this->assertArrayHasKey('X-Hash', $headers);
+        $this->assertArrayHasKey('token', $headers);
+        $this->assertArrayHasKey('timestamp', $headers);
+        $this->assertArrayHasKey('hash', $headers);
         
-        $this->assertEquals("Bearer {$token}", $headers['Authorization']);
-        $this->assertEquals($timestamp, $headers['X-Timestamp']);
+        $this->assertEquals($token, $headers['token']);
+        $this->assertEquals((string)$timestamp, $headers['timestamp']);
+        $this->assertNotEmpty($headers['hash']);
     }
 
     public function testGenerateAuthHeadersWithoutToken(): void
@@ -117,5 +118,19 @@ class AuthenticationTest extends TestCase
         for ($i = 0; $i < 5; $i++) {
             $this->assertEquals($hash, $this->auth->generateHash($token, $timestamp, $username));
         }
+    }
+
+    public function testHashGenerationMatchesPostmanImplementation(): void
+    {
+        $token = 'test_token_123';
+        $timestamp = 1640995200; 
+        $username = 'test_user';
+        
+        $sdkHash = $this->auth->generateHash($token, $timestamp, $username);
+        
+        $expectedHash = hash('sha256', $token . $timestamp . $username);
+        
+        $this->assertEquals($expectedHash, $sdkHash);
+        $this->assertEquals(64, strlen($sdkHash));
     }
 } 
