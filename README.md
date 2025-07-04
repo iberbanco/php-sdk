@@ -85,10 +85,17 @@ $client = IberbancoClient::create([
 ```bash
 IBERBANCO_SANDBOX=true
 IBERBANCO_USERNAME=your_agent_username
+IBERBANCO_PASSWORD=your_agent_password
 ```
 
 ```php
 $client = IberbancoClient::createFromEnvironment();
+
+// Authenticate using environment variables
+$authResponse = $client->authenticate(
+    $_ENV['IBERBANCO_USERNAME'] ?? '',
+    $_ENV['IBERBANCO_PASSWORD'] ?? ''
+);
 ```
 
 ### Configuration Parameters
@@ -104,12 +111,18 @@ $client = IberbancoClient::createFromEnvironment();
 ## 🔐 Authentication
 
 ```php
-// Authenticate and get access token
-$authResponse = $client->auth()->authenticate('your_username', 'your_password');
-$token = $authResponse['data']['token'];
+// Method 1: Direct authentication
+$authResponse = $client->authenticate('your_username', 'your_password');
+$token = $authResponse['data']['token']; // Token is automatically set
 
-// Set token for subsequent requests
-$client->setAuthToken($token);
+// Method 2: Using environment variables
+$authResponse = $client->authenticate(
+    $_ENV['IBERBANCO_USERNAME'],
+    $_ENV['IBERBANCO_PASSWORD']
+);
+
+// Method 3: Manual token setting (if you already have a token)
+$client->setAuthToken('your_existing_token');
 ```
 
 ## 💰 Currency System

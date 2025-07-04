@@ -43,13 +43,20 @@ echo "====================================\n\n";
 // Set environment variables (in real usage, these would be set in your environment)
 putenv('IBERBANCO_SANDBOX=true');
 putenv('IBERBANCO_USERNAME=your_agent_username');
+putenv('IBERBANCO_PASSWORD=your_agent_password');
 putenv('IBERBANCO_TIMEOUT=45');
 putenv('IBERBANCO_VERIFY_SSL=true');
 putenv('IBERBANCO_DEBUG=false');
 
 $envClient = IberbancoClient::createFromEnvironment();
 echo "✅ Environment client created with sandbox: " . ($envClient->getConfig()->isSandbox() ? 'true' : 'false') . "\n";
-echo "✅ Environment client endpoint: " . $envClient->getConfig()->getBaseUrl() . "\n\n";
+echo "✅ Environment client endpoint: " . $envClient->getConfig()->getBaseUrl() . "\n";
+
+// Demonstrate authentication using environment variables
+echo "🔐 Authentication using environment variables:\n";
+echo "   Username: " . ($_ENV['IBERBANCO_USERNAME'] ?? 'not_set') . "\n";
+echo "   Password: " . (isset($_ENV['IBERBANCO_PASSWORD']) ? '***hidden***' : 'not_set') . "\n";
+echo "   Note: Call \$client->authenticate(\$_ENV['IBERBANCO_USERNAME'], \$_ENV['IBERBANCO_PASSWORD'])\n\n";
 
 // 4. Dynamic configuration switching
 echo "🔄 Dynamic Configuration Switching...\n";
