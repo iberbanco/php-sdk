@@ -16,7 +16,6 @@
 - **Type-Safe DTOs**: Data Transfer Objects with validation for all requests
 - **Professional Enums**: Type-safe enums for currencies, statuses, and types
 - **PSR-4 Compliant**: Modern PHP standards and best practices
-- **Zero Magic Numbers**: Clean, self-documenting code
 
 ## 📋 Requirements
 
@@ -41,8 +40,7 @@ The SDK includes comprehensive example files:
 - `examples/transaction_management.php` - Transaction processing examples
 - `examples/card_management.php` - Card operations and management
 - `examples/dto_usage.php` - Complete DTO usage demonstrations
-- `examples/enum_usage.php` - Professional enum usage examples
-- `examples/optimized_usage.php` - Performance optimization examples
+- `examples/configuration_examples.php` - Configuration options
 
 ## 🚀 Quick Start
 
@@ -58,93 +56,52 @@ use Iberbanco\SDK\IberbancoClient;
 // Recommended: Use sandbox boolean for environment switching
 $client = IberbancoClient::create([
     'sandbox' => true, // Set to false for production
-    'username' => 'your_agent_username',
+    'username' => $_ENV['IBERBANCO_USERNAME'] ?? 'your_agent_username',
     'timeout' => 30,
     'verify_ssl' => true
 ]);
-
-// Alternative: From environment variables
-$client = IberbancoClient::createFromEnvironment();
 ```
 
-## ⚙️ Configuration Options
+## ⚙️ Configuration
 
-The SDK supports multiple configuration approaches for different use cases:
-
-### 🔥 NEW: Environment Switching with Boolean Flag (Recommended)
+### Basic Configuration
 
 ```php
-// Sandbox environment
+// Sandbox environment (for testing)
 $client = IberbancoClient::create([
-    'sandbox' => true, // Automatically uses sandbox endpoint
-    'username' => 'your_agent_username',
-    'timeout' => 30,
-    'verify_ssl' => true,
-    'debug' => false
+    'sandbox' => true,
+    'username' => 'your_agent_username'
 ]);
 
 // Production environment
 $client = IberbancoClient::create([
-    'sandbox' => false, // Automatically uses production endpoint
-    'username' => 'your_agent_username',
-    'timeout' => 30,
-    'verify_ssl' => true,
-    'debug' => false
+    'sandbox' => false,
+    'username' => 'your_agent_username'
 ]);
 ```
 
-### Environment Variables Configuration
-
-Set these environment variables and use `createFromEnvironment()`:
+### Environment Variables
 
 ```bash
-IBERBANCO_SANDBOX=true                    # true for sandbox, false for production
-IBERBANCO_USERNAME=your_agent_username    # Your agent username
-IBERBANCO_TIMEOUT=30                      # Request timeout in seconds
-IBERBANCO_VERIFY_SSL=true                 # SSL verification (recommended)
-IBERBANCO_DEBUG=false                     # Debug mode
+IBERBANCO_SANDBOX=true
+IBERBANCO_USERNAME=your_agent_username
 ```
 
 ```php
-// Load configuration from environment
 $client = IberbancoClient::createFromEnvironment();
 ```
-
-### Available Endpoints
-
-The SDK automatically selects the correct endpoint based on the `sandbox` setting:
-
-- **Sandbox**: `https://sandbox.api.iberbanco.finance/api/v2/`
-- **Production**: `https://production.api.iberbancoltd.com/api/v2/`
-
-### Legacy Configuration (Backward Compatible)
-
-You can still use the manual `base_url` approach for custom endpoints:
-
-```php
-$client = IberbancoClient::create([
-    'base_url' => 'https://sandbox.api.iberbanco.finance/api/v2',
-    'username' => 'your_agent_username',
-    'timeout' => 30,
-    'verify_ssl' => true
-]);
-```
-
-**Note**: When `base_url` is provided, it overrides the automatic sandbox/production selection.
 
 ### Configuration Parameters
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `sandbox` | boolean | `true` | Environment selector (sandbox/production) |
-| `base_url` | string | auto | Override automatic endpoint selection |
+| `sandbox` | boolean | `true` | Environment (sandbox/production) |
 | `username` | string | required | Your agent username |
-| `timeout` | integer | `30` | Request timeout (1-300 seconds) |
+| `timeout` | integer | `30` | Request timeout in seconds |
 | `verify_ssl` | boolean | `true` | SSL certificate verification |
-| `debug` | boolean | `false` | Enable debug mode |
-| `headers` | array | `[]` | Additional HTTP headers |
+| `debug` | boolean | `false` | Debug mode |
 
-### Authentication
+## 🔐 Authentication
 
 ```php
 // Authenticate and get access token
@@ -155,542 +112,181 @@ $token = $authResponse['data']['token'];
 $client->setAuthToken($token);
 ```
 
-### Working with Users
+## 💰 Currency System
+
+**Important**: The Iberbanco API uses internal currency IDs, not ISO codes.
 
 ```php
-// List users with filtering
-$users = $client->users()->list([
-    'per_page' => 50,
-    'country' => 'US',
-    'status' => 'active'
-]);
+// Supported Currency IDs
+1  => 'USD'    // US Dollar
+2  => 'EUR'    // Euro  
+3  => 'GBP'    // British Pound
+4  => 'CHF'    // Swiss Franc
+5  => 'RUB'    // Russian Ruble
+6  => 'TRY'    // Turkish Lira
+7  => 'AED'    // UAE Dirham
+8  => 'CNH'    // Chinese Yuan
+9  => 'AUD'    // Australian Dollar
+10 => 'CZK'    // Czech Koruna
+11 => 'PLN'    // Polish Zloty
+12 => 'CAD'    // Canadian Dollar
+13 => 'USDT'   // Tether (USDT)
+14 => 'HKD'    // Hong Kong Dollar
+15 => 'SGD'    // Singapore Dollar
+16 => 'JPY'    // Japanese Yen
 
-// Register a personal user
-$personalUser = $client->users()->registerPersonal([
-    'email' => 'john.doe@example.com',
-    'password' => 'secure_password',
-    'first_name' => 'John',
-    'last_name' => 'Doe',
-    'date_of_birth' => '1990-01-01',
-    'country' => 'US',
-    'address' => '123 Main St',
-    'city' => 'New York',
-    'post_code' => '10001',
-    'call_number' => '+1234567890',
-    'citizenship' => 'US'
-]);
-```
-
-```php
-use Iberbanco\SDK\Utils\ValidationUtils;
-use Iberbanco\SDK\Constants\ApiConstants;
-use Iberbanco\SDK\Cache\MemoryCache;
-use Iberbanco\SDK\Enums\Currency;
-
-ValidationUtils::validateEmail('user@example.com');
-ValidationUtils::validateIban('ES9121000418450200051332');
-ValidationUtils::validatePhoneNumber('+1234567890');
-
-$client->getHttpClient()->setTimeout(ApiConstants::DEFAULT_TIMEOUT);
-
-$cache = new MemoryCache();
-$cache->set('user_preferences', $data, ApiConstants::DEFAULT_CACHE_TTL);
-
-if (Currency::isSupported('USD')) {
-    $currencyId = Currency::getIdByCode('USD');
-}
-```
-### 🔍 Available Enum Classes
-
-#### Currency Enum
-```php
-use Iberbanco\SDK\Enums\Currency;
-
-// Instead of magic numbers like 840, 978, 826...
+// Always use internal IDs in requests
 $accountData = [
-    'currency' => Currency::USD,  // Clear and self-documenting
-    'backup_currency' => Currency::EUR
-];
-
-// Helper methods
-Currency::isSupported('USD')        // true
-Currency::getIsoCode('USD')         // "840"
-Currency::getAllCodes()             // ['USD', 'EUR', 'GBP', ...]
-```
-
-#### Account & Transaction Status
-```php
-use Iberbanco\SDK\Enums\AccountStatus;
-use Iberbanco\SDK\Enums\TransactionStatus;
-
-// Account status
-if ($account->status === AccountStatus::ACTIVE) {
-    // Account is active
-}
-
-// Transaction status with helper methods
-if (TransactionStatus::isPending($transaction->status)) {
-    // Transaction is still processing
-}
-
-if (TransactionStatus::isFinal($transaction->status)) {
-    // Transaction completed (approved, denied, etc.)
-}
-```
-
-#### Transaction Types
-```php
-use Iberbanco\SDK\Enums\TransactionType;
-
-$transactionData = [
-    'type' => TransactionType::SEPA_TRANSACTION,
-    'amount' => 1000.00
-];
-
-// Helper methods
-if (TransactionType::requiresInternationalFields($type)) {
-    // Add SWIFT/BIC codes for international transfers
-}
-
-if (TransactionType::isCrypto($type)) {
-    // Handle crypto-specific logic
-}
-```
-
-#### Card Management
-```php
-use Iberbanco\SDK\Enums\CardStatus;
-use Iberbanco\SDK\Enums\ClientType;
-
-// Check card status
-if (CardStatus::isActive($card->status)) {
-    // Card can be used for transactions
-}
-
-if (CardStatus::isBlocked($card->status)) {
-    // Card is blocked (lost, stolen, expired, etc.)
-}
-
-// Client type validation
-$userData = [
-    'type' => ClientType::PERSONAL_TYPE,  // or ClientType::BUSINESS_TYPE
-    'email' => 'user@example.com'
+    'user_number' => 'USER123456',
+    'currency' => 1, // USD
+    'reference' => 'Primary USD account'
 ];
 ```
+
 ## 🔧 Using Data Transfer Objects (DTOs)
 
-The SDK now includes comprehensive DTOs (Data Transfer Objects) that provide type safety, validation, and clear documentation of required fields for each API operation.
+The SDK includes comprehensive DTOs that provide type safety and validation:
 
-### Benefits of DTOs
-
-- **Type Safety**: Know exactly which fields are required and optional
-- **Automatic Validation**: Built-in validation with clear error messages
-- **IDE Support**: Better autocomplete and type hints
-- **Documentation**: Self-documenting code with clear field requirements
-
-### DTO Usage Examples
-
-#### User Registration with DTOs
-
-```php
-use Iberbanco\SDK\DTOs\User\RegisterPersonalUserDTO;
-use Iberbanco\SDK\DTOs\User\RegisterBusinessUserDTO;
-use Iberbanco\SDK\DTOs\User\ListUsersDTO;
-
-// Using DTO for personal user registration
-$personalUserDTO = RegisterPersonalUserDTO::fromArray([
-    'email' => 'john.doe@example.com',
-    'password' => 'SecurePassword123!',
-    'first_name' => 'John',
-    'last_name' => 'Doe',
-    'date_of_birth' => '1990-01-15',
-    'country' => 'US',
-    'citizenship' => 'US',
-    'address' => '123 Main Street',
-    'city' => 'New York',
-    'post_code' => '10001',
-    'call_number' => '+1234567890'
-]);
-
-$user = $client->users()->registerPersonal($personalUserDTO);
-
-// Using DTO for business user registration
-$businessUserDTO = RegisterBusinessUserDTO::fromArray([
-    'email' => 'business@company.com',
-    'password' => 'SecurePassword123!',
-    'first_name' => 'Jane',
-    'last_name' => 'Smith',
-    'country' => 'US',
-    'address' => '456 Business Ave',
-    'city' => 'Chicago',
-    'post_code' => '60601',
-    'call_number' => '+1987654321',
-    'company_name' => 'Acme Corporation',
-    'company_registration_number' => 'REG123456789'
-]);
-
-$businessUser = $client->users()->registerBusiness($businessUserDTO);
-
-// Using DTO for listing users
-$listUsersDTO = ListUsersDTO::fromArray([
-    'per_page' => 25,
-    'country' => 'US',
-    'type' => 1, // Personal users
-    'date_from' => '2024-01-01'
-]);
-
-$users = $client->users()->list($listUsersDTO);
-```
-
-#### Account Operations with DTOs
+### Account Operations
 
 ```php
 use Iberbanco\SDK\DTOs\Account\CreateAccountDTO;
 use Iberbanco\SDK\DTOs\Account\SearchAccountsDTO;
-use Iberbanco\SDK\DTOs\Account\TotalBalanceDTO;
 
-// Create account using DTO
-$createAccountDTO = CreateAccountDTO::fromArray([
+// Create account with DTO
+$accountDTO = CreateAccountDTO::fromArray([
     'user_number' => 'USER123456',
-    'currency' => [840, 978], // USD and EUR
-    'reference' => 'Multi-currency account'
+    'currency' => 1, // USD (internal ID)
+    'reference' => 'Primary account'
 ]);
 
-$account = $client->accounts()->create($createAccountDTO);
-
-// Search accounts using DTO
-$searchDTO = SearchAccountsDTO::fromArray([
-    'currency' => 840, // USD
-    'min_balance' => 1000.00,
-    'date_from' => '2024-01-01'
-]);
-
-$accounts = $client->accounts()->search($searchDTO);
-
-// Get total balance using DTO
-$balanceDTO = TotalBalanceDTO::fromArray([
-    'currency' => 840 // USD
-]);
-
-$balance = $client->accounts()->totalBalance($balanceDTO);
-```
-
-#### Transaction DTOs
-
-```php
-use Iberbanco\SDK\DTOs\Transaction\CreateSwiftTransactionDTO;
-use Iberbanco\SDK\DTOs\Transaction\CreateSepaTransactionDTO;
-use Iberbanco\SDK\DTOs\Transaction\CreateAchTransactionDTO;
-
-// SWIFT transaction with DTO
-$swiftDTO = CreateSwiftTransactionDTO::fromArray([
-    'account_number' => 'ACC123456789',
-    'amount' => 1500.00,
-    'recipient_account_number' => 'REC987654321',
-    'recipient_bank_code' => 'DEUTDEFF',
-    'recipient_name' => 'John Smith',
-    'recipient_address' => '789 International Blvd, Frankfurt, Germany',
-    'reference' => 'Invoice payment',
-    'description' => 'Payment for consulting services'
-]);
-
-$swiftTransaction = $client->transactions()->create('swift', $swiftDTO);
-
-// SEPA transaction with DTO
-$sepaDTO = CreateSepaTransactionDTO::fromArray([
-    'account_number' => 'ACC123456789',
-    'amount' => 500.00,
-    'recipient_iban' => 'DE89370400440532013000',
-    'recipient_name' => 'Maria Garcia',
-    'reference' => 'Monthly payment',
-    'description' => 'Subscription fee'
-]);
-
-$sepaTransaction = $client->transactions()->create('sepa', $sepaDTO);
-
-// ACH transaction with DTO
-$achDTO = CreateAchTransactionDTO::fromArray([
-    'account_number' => 'ACC123456789',
-    'amount' => 750.00,
-    'recipient_account_number' => '1234567890',
-    'recipient_routing_number' => '021000021',
-    'recipient_name' => 'Bob Johnson',
-    'reference' => 'Refund payment'
-]);
-
-$achTransaction = $client->transactions()->create('ach', $achDTO);
-```
-
-#### Card Management with DTOs
-
-```php
-use Iberbanco\SDK\DTOs\Card\CreateCardDTO;
-use Iberbanco\SDK\DTOs\Card\RequestPhysicalCardDTO;
-use Iberbanco\SDK\DTOs\Card\CardTransactionsDTO;
-
-// Create card with DTO
-$createCardDTO = CreateCardDTO::fromArray([
-    'user_number' => 'USER123456',
-    'account_number' => 'ACC123456789',
-    'card_type' => 'virtual',
-    'currency' => 840, // USD
-    'daily_limit' => 1000.00,
-    'monthly_limit' => 5000.00
-]);
-
-$card = $client->cards()->create($createCardDTO);
-
-// Request physical card with DTO
-$physicalCardDTO = RequestPhysicalCardDTO::fromArray([
-    'card_id' => 'CARD123456',
-    'delivery_address' => [
-        'street' => '123 Main Street, Apt 4B',
-        'city' => 'New York',
-        'country' => 'US',
-        'postal_code' => '10001',
-        'state' => 'NY'
-    ],
-    'express_delivery' => true
-]);
-
-$physicalCardRequest = $client->cards()->requestPhysical($physicalCardDTO);
-
-// Get card transactions with DTO
-$cardTransactionsDTO = CardTransactionsDTO::fromArray([
-    'card_id' => 'CARD123456',
-    'per_page' => 20,
-    'date_from' => '2024-01-01'
-]);
-
-$transactions = $client->cards()->transactions($cardTransactionsDTO);
-```
-
-#### Crypto & Exchange DTOs
-
-```php
-use Iberbanco\SDK\DTOs\CryptoTransaction\CreatePaymentLinkDTO;
-use Iberbanco\SDK\DTOs\Exchange\GetRateDTO;
-use Iberbanco\SDK\DTOs\Export\ExportDataDTO;
-
-// Create crypto payment link with DTO
-$paymentLinkDTO = CreatePaymentLinkDTO::fromArray([
-    'amount' => 250.00,
-    'currency' => 'USD',
-    'description' => 'Product purchase',
-    'callback_url' => 'https://yoursite.com/webhooks/payment',
-    'return_url' => 'https://yoursite.com/payment/success',
-    'expires_at' => date('Y-m-d H:i:s', strtotime('+24 hours'))
-]);
-
-$paymentLink = $client->cryptoTransactions()->createPaymentLink($paymentLinkDTO);
-
-// Get exchange rate with DTO
-$rateDTO = GetRateDTO::fromArray([
-    'from' => 'USD',
-    'to' => 'EUR',
-    'amount' => 1000.00,
-    'precision' => 4
-]);
-
-$rate = $client->exchange()->getRate($rateDTO);
-
-// Export data with DTO
-$exportDTO = ExportDataDTO::fromArray([
-    'format' => 'csv',
-    'date_from' => '2024-01-01',
-    'date_to' => '2024-12-31',
-    'columns' => ['user_number', 'email', 'first_name', 'last_name', 'created_at'],
-    'notify_email' => 'admin@yourcompany.com',
-    'compressed' => true
-]);
-
-$exportJob = $client->export()->users($exportDTO);
-```
-
-### Available DTOs
-
-#### Authentication
-- `AuthLoginDTO` - For authentication requests
-
-#### Users
-- `RegisterPersonalUserDTO` - Personal user registration
-- `RegisterBusinessUserDTO` - Business user registration  
-- `ListUsersDTO` - User listing and filtering
-
-#### Accounts
-- `CreateAccountDTO` - Account creation
-- `SearchAccountsDTO` - Account searching
-- `TotalBalanceDTO` - Balance inquiries
-
-#### Transactions
-- `CreateSwiftTransactionDTO` - SWIFT transactions
-- `CreateSepaTransactionDTO` - SEPA transactions
-- `CreateAchTransactionDTO` - ACH transactions
-
-#### Cards
-- `CreateCardDTO` - Card creation
-- `RequestPhysicalCardDTO` - Physical card requests
-- `CardTransactionsDTO` - Card transaction history
-
-#### Crypto Transactions
-- `CreatePaymentLinkDTO` - Payment link creation
-
-#### Exchange
-- `GetRateDTO` - Exchange rate requests
-
-#### Export
-- `ExportDataDTO` - Data export requests
-
-### DTO Validation
-
-All DTOs include comprehensive validation:
-
-```php
-try {
-    $userDTO = RegisterPersonalUserDTO::fromArray([
-        'email' => 'invalid-email', // Will trigger validation error
-        'password' => '123' // Too short, will trigger validation error
-    ]);
-} catch (ValidationException $e) {
-    echo "Validation failed: " . $e->getMessage();
-    print_r($e->getErrors()); // Get detailed error list
-}
-```
-
-### Backward Compatibility
-
-The SDK maintains full backward compatibility. You can still use arrays:
-
-```php
-// This still works (array approach)
-$user = $client->users()->registerPersonal([
-    'email' => 'user@example.com',
-    'password' => 'password123'
-    // ... other fields
-]);
-
-// This is the new recommended approach (DTO)
-$userDTO = RegisterPersonalUserDTO::fromArray([
-    'email' => 'user@example.com',
-    'password' => 'password123'
-    // ... other fields
-]);
-$user = $client->users()->registerPersonal($userDTO);
-```
-
-### Account Management
-
-```php
-// List accounts
-$accounts = $client->accounts()->list(['per_page' => 25]);
-
-// Create new account
-$account = $client->accounts()->create([
-    'user_number' => 'USER123456',
-    'currency' => [840, 978], // USD, EUR
-    'reference' => 'Account for John Doe'
-]);
-
-// Get account details
-$accountDetails = $client->accounts()->show('ACC123456789');
-
-// Get total balance
-$balance = $client->accounts()->totalBalance(['currency' => 840]);
-```
-
-### Transaction Processing
-
-```php
-// List transactions
-$transactions = $client->transactions()->list([
-    'per_page' => 50,
-    'status' => 'completed'
-]);
-
-// Create SWIFT transaction
-$swiftTransaction = $client->transactions()->create('swift', [
-    'account_number' => 'ACC123456789',
-    'amount' => 1000.50,
-    'recipient_account_number' => 'REC987654321',
-    'recipient_bank_code' => 'DEUTDEFF',
-    'reference' => 'Payment for services',
-    'description' => 'Monthly service payment'
-]);
-
-// Create SEPA transaction
-$sepaTransaction = $client->transactions()->create('sepa', [
-    'account_number' => 'ACC123456789',
-    'amount' => 500.00,
-    'recipient_iban' => 'DE89370400440532013000',
-    'recipient_name' => 'John Smith',
-    'reference' => 'Invoice #12345'
-]);
+$account = $client->accounts()->create($accountDTO);
 ```
 
 ### Card Operations
 
 ```php
+use Iberbanco\SDK\DTOs\Card\CreateCardDTO;
+
+// Create card with DTO
+$cardDTO = CreateCardDTO::fromArray([
+    'user_number' => 'USER123456',
+    'account_number' => 'ACC123456789',
+    'amount' => 1000.00,
+    'currency' => 1, // USD (internal ID)
+    'shipping_address' => '123 Main Street',
+    'shipping_city' => 'New York',
+    'shipping_state' => 'NY',
+    'shipping_country_code' => 'US',
+    'shipping_post_code' => '10001',
+    'delivery_method' => 'Standard'
+]);
+
+$card = $client->cards()->create($cardDTO);
+```
+
+### Transaction Operations
+
+```php
+use Iberbanco\SDK\DTOs\Transaction\CreateSwiftTransactionDTO;
+use Iberbanco\SDK\DTOs\Transaction\CreateSepaTransactionDTO;
+
+// SWIFT transaction
+$swiftDTO = CreateSwiftTransactionDTO::fromArray([
+    'account_number' => 'ACC123456789',
+    'amount' => 1500.00,
+    'reference' => 'International payment',
+    'iban_code' => 'DE89370400440532013000',
+    'beneficiary_name' => 'John Smith',
+    'beneficiary_country' => 'Germany',
+    'beneficiary_city' => 'Frankfurt',
+    'beneficiary_address' => '789 International Blvd',
+    'beneficiary_zip_code' => '60311',
+    'beneficiary_email' => 'john.smith@example.com',
+    'swift_code' => 'DEUTDEFF',
+    'bank_name' => 'Deutsche Bank',
+    'bank_country' => 'Germany',
+    'bank_city' => 'Frankfurt',
+    'bank_address' => 'Taunusanlage 12',
+    'bank_zip_code' => '60325'
+]);
+
+$transaction = $client->transactions()->create('swift', $swiftDTO);
+```
+
+### Crypto Operations
+
+```php
+use Iberbanco\SDK\DTOs\CryptoTransaction\CreatePaymentLinkDTO;
+
+// Create crypto payment link
+$paymentLinkDTO = CreatePaymentLinkDTO::fromArray([
+    'email' => 'customer@example.com',
+    'order_id' => 'ORDER_' . time(),
+    'fiat_amount' => 250.00,
+    'fiat_currency' => 'USD',
+    'redirect_url' => 'https://yoursite.com/payment/success'
+]);
+
+$paymentLink = $client->cryptoTransactions()->createPaymentLink($paymentLinkDTO);
+```
+
+## 📊 Basic Operations
+
+### Working with Accounts
+
+```php
+// List accounts
+$accounts = $client->accounts()->list([
+    'per_page' => 50,
+    'currency' => 1 // USD
+]);
+
+// Get account details
+$account = $client->accounts()->show('ACC123456789');
+
+// Get total balance
+$balance = $client->accounts()->totalBalance(['currency' => 1]);
+```
+
+### Working with Cards
+
+```php
 // List cards
 $cards = $client->cards()->list(['visibility' => 'active']);
 
-// Create new card
-$card = $client->cards()->create([
-    'user_number' => 'USER123456',
-    'account_number' => 'ACC123456789',
-    'card_type' => 'virtual'
-]);
-
 // Get card details
-$cardDetails = $client->cards()->show('CARD123456');
+$card = $client->cards()->show('CARD123456');
+
+// Get card transactions
+$transactions = $client->cards()->transactions([
+    'remote_id' => 'CARD123456',
+    'userNumber' => 'USER123456',
+    'san' => 'SAN123456',
+    'year' => 2024,
+    'month' => 12
+]);
 
 // Request physical card
 $physicalCard = $client->cards()->requestPhysical([
-    'card_id' => 'CARD123456',
-    'delivery_address' => [
-        'street' => '123 Main St',
-        'city' => 'New York',
-        'country' => 'US',
-        'postal_code' => '10001'
-    ]
+    'remote_id' => 'CARD123456'
 ]);
 ```
 
-### Crypto Transactions
+### Working with Transactions
 
 ```php
-// List crypto transactions
-$cryptoTxs = $client->cryptoTransactions()->list();
-
-// Create payment link
-$paymentLink = $client->cryptoTransactions()->createPaymentLink([
-    'amount' => 100.00,
-    'currency' => 'USD',
-    'description' => 'Product purchase',
-    'callback_url' => 'https://yoursite.com/callback'
-]);
-```
-
-### Export Services
-
-```php
-// Export users data
-$userExport = $client->export()->users([
-    'format' => 'csv',
-    'filters' => [
-        'country' => 'US',
-        'status' => 'active'
-    ]
+// List transactions
+$transactions = $client->transactions()->list([
+    'per_page' => 50
 ]);
 
-// Export accounts data
-$accountExport = $client->export()->accounts([
-    'format' => 'csv',
-    'currency' => 840
-]);
+// Get transaction details
+$transaction = $client->transactions()->show('TXN123456789');
 
-// Export transactions
-$transactionExport = $client->export()->transactions([
-    'format' => 'csv',
+// Search transactions
+$searchResults = $client->transactions()->search([
+    'amount_min' => 100.00,
     'date_from' => '2024-01-01',
     'date_to' => '2024-12-31'
 ]);
@@ -701,31 +297,21 @@ $transactionExport = $client->export()->transactions([
 ```php
 // Get exchange rate
 $rate = $client->exchange()->getRate([
-    'from_currency' => 'USD',
-    'to_currency' => 'EUR',
-    'amount' => 1000
+    'from' => 'USD',
+    'to' => 'EUR',
+    'amount' => 1000.00
 ]);
 ```
 
-## 🔐 Authentication & Security
+## 🔒 Security
 
 The SDK implements Iberbanco's 3-layer security system:
 
 1. **Agent Token**: Your unique API access token
-2. **Timestamp**: Current Unix timestamp for request validation
+2. **Timestamp**: Current Unix timestamp for request validation  
 3. **Hash**: HMAC-SHA256 signature for request integrity
 
-```php
-// Manual authentication setup (advanced usage)
-use Iberbanco\SDK\Auth\Authentication;
-
-$auth = new Authentication('your_username');
-$headers = $auth->generateAuthHeaders($token, $timestamp);
-```
-
 ## 🧪 Testing
-
-Run the test suite:
 
 ```bash
 # Run all tests
@@ -736,27 +322,18 @@ composer test-coverage
 
 # Static analysis
 composer analyse
-
-# Code style check
-composer cs-check
 ```
 
+## 🌍 Supported Services
+
 ### ✅ **Complete Banking Platform**
-- **80+ Currencies** supported globally
+- **16 Currencies** supported (USD, EUR, GBP, CHF, RUB, TRY, AED, CNH, AUD, CZK, PLN, CAD, USDT, HKD, SGD, JPY)
 - **185+ Jurisdictions** for operations  
 - **10+ Payment Networks** (SWIFT, SEPA, ACH, BACS, EFT, INTERAC, etc.)
 - **Virtual Multi-Currency Accounts**
 - **Debit Cards** (Virtual & Physical)
-- **Crypto Transactions**
+- **Crypto Transactions** (USDT support)
 - **Export Services** with email delivery
-
-### 🚀 **Ready for:**
-- Banking applications
-- Financial service integrations
-- Multi-currency platforms
-- International payment processing
-- Cryptocurrency services
-- Enterprise-level deployments
 
 ## 🏦 About Iberbanco
 
@@ -773,24 +350,12 @@ composer cs-check
 
 For detailed API documentation, visit: [https://sandbox.api.iberbanco.finance/doc](https://sandbox.api.iberbanco.finance/doc)
 
-## 🤝 Contributing
-
-We welcome contributions! Please submit issues and pull requests through GitHub.
-
-## 📝 Changelog
-
-See GitHub releases for recent changes and version history.
-
-## 🔒 Security
-
-If you discover any security-related issues, please email info@iberbancoltd.com instead of using the issue tracker.
-
-## 📄 License
-
-The MIT License (MIT). Please see [License File](LICENSE) for more information.
-
 ## 🆘 Support
 
 - 📧 Email: info@iberbancoltd.com
 - 📚 API Documentation: https://sandbox.api.iberbanco.finance/doc
-- 🌐 Website: https://iberbancoltd.com/ 
+- 🌐 Website: https://iberbancoltd.com/
+
+## 📄 License
+
+The MIT License (MIT). Please see [License File](LICENSE) for more information.

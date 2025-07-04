@@ -16,13 +16,14 @@ use Iberbanco\SDK\DTOs\Card\RequestPhysicalCardDTO;
 use Iberbanco\SDK\DTOs\CryptoTransaction\CreatePaymentLinkDTO;
 use Iberbanco\SDK\DTOs\Exchange\GetRateDTO;
 use Iberbanco\SDK\DTOs\Export\ExportDataDTO;
+use Iberbanco\SDK\DTOs\Account\TotalBalanceDTO;
 use Iberbanco\SDK\Exceptions\ValidationException;
 use Iberbanco\SDK\Exceptions\ApiException;
 
 // Create SDK client
 $client = IberbancoClient::create([
-    'base_url' => 'https://sandbox.api.iberbanco.finance/v2',
-    'username' => 'your_agent_username',
+    'sandbox' => true, // Set to false for production
+    'username' => $_ENV['IBERBANCO_USERNAME'] ?? 'your_agent_username',
     'timeout' => 30,
     'verify_ssl' => true,
     'debug' => true
@@ -48,37 +49,62 @@ try {
     // 2. User Registration with DTOs
     echo "👤 2. User Registration using DTOs\n";
     
-    // Personal user DTO
+    // Personal user DTO (includes all required fields for card+crypto services)
     $personalUserDTO = RegisterPersonalUserDTO::fromArray([
         'email' => 'john.doe.demo+' . time() . '@example.com',
         'password' => 'SecurePassword123!',
         'first_name' => 'John',
         'last_name' => 'Doe',
         'date_of_birth' => '1990-01-15',
-        'country' => 'US',
         'citizenship' => 'US',
         'address' => '123 Main Street',
         'city' => 'New York',
+        'state_or_province' => 'NY',
         'post_code' => '10001',
-        'call_number' => '+1234567890'
+        'country' => 'US',
+        'call_number' => '+1234567890',
+        'currencies' => [13], // USDT for card+crypto services
+        'selected_service' => ['card', 'crypto'],
+        'sources_of_wealth' => ['employment'],
+        'is_pep' => false,
+        'terms_accepted' => true
     ]);
     
     echo "✅ Personal user DTO validated\n";
     echo "Required fields: " . implode(', ', $personalUserDTO->getRequiredFields()) . "\n";
     
-    // Business user DTO
+    // Business user DTO (complete V2 API structure - note: requires file uploads in real usage)
     $businessUserDTO = RegisterBusinessUserDTO::fromArray([
         'email' => 'business.demo+' . time() . '@company.com',
         'password' => 'SecurePassword123!',
         'first_name' => 'Jane',
         'last_name' => 'Smith',
-        'country' => 'US',
+        'call_number' => '+1987654321',
+        'date_of_birth' => '1985-05-20',
         'address' => '456 Business Ave',
         'city' => 'Chicago',
+        'country' => 'US',
+        'state_or_province' => 'IL',
         'post_code' => '60601',
-        'call_number' => '+1987654321',
+        'identity_card_type' => 1, // e.g., passport
+        'identity_card_id' => 'P123456789',
+        'tax_number' => 'TAX123456789',
+        'citizenship' => 'US',
+        'currencies' => [1, 2], // USD, EUR
+        'sources_of_wealth' => ['business_income'],
         'company_name' => 'Demo Corporation',
-        'company_registration_number' => 'REG123456789'
+        'company_type' => 1, // e.g., LLC
+        'registration_date' => '2020-01-15',
+        'registration_number' => 'REG123456789',
+        'nature_of_business' => 1, // e.g., technology
+        'financial_regulator' => 'SEC',
+        'regulatory_license_number' => 'LIC123456',
+        'industry_id' => 'TECH001',
+        'authorized_person_country_of_residence' => 'US',
+        'authorized_person_city' => 'Chicago',
+        'authorized_person_address' => '456 Business Ave',
+        'authorized_person_postal_code' => '60601',
+        'selected_service' => ['card', 'crypto', 'bank']
     ]);
     
     echo "✅ Business user DTO validated\n";
@@ -99,53 +125,79 @@ try {
     // 4. Account Operations with DTOs
     echo "🏦 4. Account Operations using DTOs\n";
     
-    // Create account DTO
+    // Create account using DTO
     $createAccountDTO = CreateAccountDTO::fromArray([
         'user_number' => 'USER123456',
-        'currency' => [840, 978], // USD and EUR
-        'reference' => 'Multi-currency demo account'
+        'currency' => [1, 2], // USD and EUR (internal IDs)
+        'reference' => 'Multi-currency account'
     ]);
     
     echo "✅ Create account DTO validated\n";
     echo "Required fields: " . implode(', ', $createAccountDTO->getRequiredFields()) . "\n";
     
-    // Search accounts DTO
-    $searchAccountsDTO = SearchAccountsDTO::fromArray([
-        'currency' => 840,
+    // Search accounts using DTO
+    $searchDTO = SearchAccountsDTO::fromArray([
+        'currency' => 1, // USD (internal ID)
         'min_balance' => 1000.00,
-        'date_from' => '2024-01-01',
-        'per_page' => 20
+        'date_from' => '2024-01-01'
     ]);
     
     echo "✅ Search accounts DTO validated\n";
-    echo "Search criteria: " . json_encode($searchAccountsDTO->toArray()) . "\n\n";
+    echo "Search criteria: " . json_encode($searchDTO->toArray()) . "\n\n";
+
+    // Get total balance using DTO
+    $balanceDTO = TotalBalanceDTO::fromArray([
+        'currency' => 1 // USD (internal ID)
+    ]);
 
     // 5. Transaction DTOs
     echo "💸 5. Transaction Operations using DTOs\n";
     
-    // SWIFT transaction DTO
+    // SWIFT transaction DTO (using correct V2 API structure)
     $swiftDTO = CreateSwiftTransactionDTO::fromArray([
         'account_number' => 'ACC123456789',
         'amount' => 1500.00,
-        'recipient_account_number' => 'REC987654321',
-        'recipient_bank_code' => 'DEUTDEFF',
-        'recipient_name' => 'John Smith',
-        'recipient_address' => '789 International Blvd, Frankfurt, Germany',
         'reference' => 'Demo payment',
-        'description' => 'SDK demonstration payment'
+        'iban_code' => 'DE89370400440532013000',
+        'beneficiary_name' => 'John Smith',
+        'beneficiary_country' => 'Germany',
+        'beneficiary_state' => 'Hesse',
+        'beneficiary_city' => 'Frankfurt',
+        'beneficiary_address' => '789 International Blvd',
+        'beneficiary_zip_code' => '60311',
+        'beneficiary_email' => 'john.smith@example.com',
+        'swift_code' => 'DEUTDEFF',
+        'bank_name' => 'Deutsche Bank',
+        'bank_country' => 'Germany',
+        'bank_state' => 'Hesse',
+        'bank_city' => 'Frankfurt',
+        'bank_address' => 'Taunusanlage 12',
+        'bank_zip_code' => '60325'
     ]);
     
     echo "✅ SWIFT transaction DTO validated\n";
     echo "Required fields: " . implode(', ', $swiftDTO->getRequiredFields()) . "\n";
     
-    // SEPA transaction DTO
+    // SEPA transaction DTO (using correct V2 API structure)
     $sepaDTO = CreateSepaTransactionDTO::fromArray([
         'account_number' => 'ACC123456789',
         'amount' => 500.00,
-        'recipient_iban' => 'DE89370400440532013000',
-        'recipient_name' => 'Maria Garcia',
         'reference' => 'Demo SEPA payment',
-        'description' => 'SEPA demonstration'
+        'iban_code' => 'DE89370400440532013000',
+        'beneficiary_name' => 'Maria Garcia',
+        'beneficiary_country' => 'Germany',
+        'beneficiary_state' => 'Bavaria',
+        'beneficiary_city' => 'Munich',
+        'beneficiary_address' => '456 European Street',
+        'beneficiary_zip_code' => '80331',
+        'beneficiary_email' => 'maria.garcia@example.com',
+        'swift_code' => 'DEUTDEMM',
+        'bank_name' => 'Deutsche Bank Munich',
+        'bank_country' => 'Germany',
+        'bank_state' => 'Bavaria',
+        'bank_city' => 'Munich',
+        'bank_address' => 'Maximilianstrasse 1',
+        'bank_zip_code' => '80539'
     ]);
     
     echo "✅ SEPA transaction DTO validated\n";
@@ -154,56 +206,51 @@ try {
     // 6. Card Operations with DTOs
     echo "💳 6. Card Operations using DTOs\n";
     
-    // Create card DTO
+    // Create card DTO (using correct V2 API structure)
     $createCardDTO = CreateCardDTO::fromArray([
         'user_number' => 'USER123456',
         'account_number' => 'ACC123456789',
-        'card_type' => 'virtual',
-        'currency' => 840,
-        'daily_limit' => 1000.00,
-        'monthly_limit' => 5000.00
+        'amount' => 1000.00,
+        'currency' => 1, // USD (internal ID)
+        'shipping_address' => '123 Main Street',
+        'shipping_city' => 'New York',
+        'shipping_state' => 'NY',
+        'shipping_country_code' => 'US',
+        'shipping_post_code' => '10001',
+        'delivery_method' => 'Standard',
+        'product_type' => 'virtual'
     ]);
     
     echo "✅ Create card DTO validated\n";
     echo "Required fields: " . implode(', ', $createCardDTO->getRequiredFields()) . "\n";
     
-    // Request physical card DTO
+    // Request physical card DTO (using correct V2 API structure)
     $physicalCardDTO = RequestPhysicalCardDTO::fromArray([
-        'card_id' => 'CARD123456',
-        'delivery_address' => [
-            'street' => '123 Main Street, Apt 4B',
-            'city' => 'New York',
-            'country' => 'US',
-            'postal_code' => '10001',
-            'state' => 'NY'
-        ],
-        'express_delivery' => true
+        'remote_id' => 'CARD123456'
     ]);
     
     echo "✅ Physical card request DTO validated\n";
     echo "Required fields: " . implode(', ', $physicalCardDTO->getRequiredFields()) . "\n\n";
 
-    // 7. Crypto Payment Link DTO
+    // 7. Crypto Payment Link DTO (using correct V2 API structure)
     echo "₿ 7. Crypto Payment Link using DTO\n";
     $paymentLinkDTO = CreatePaymentLinkDTO::fromArray([
-        'amount' => 250.00,
-        'currency' => 'USD',
-        'description' => 'Demo product purchase',
-        'callback_url' => 'https://yoursite.com/webhooks/payment',
-        'return_url' => 'https://yoursite.com/payment/success',
-        'expires_at' => date('Y-m-d H:i:s', strtotime('+24 hours'))
+        'email' => 'customer@example.com',
+        'order_id' => 'ORDER_' . time(),
+        'fiat_amount' => 250.00,
+        'fiat_currency' => 'USD',
+        'redirect_url' => 'https://yoursite.com/payment/success'
     ]);
     
     echo "✅ Payment link DTO validated\n";
     echo "Required fields: " . implode(', ', $paymentLinkDTO->getRequiredFields()) . "\n\n";
 
-    // 8. Exchange Rate DTO
+    // 8. Exchange Rate DTO (using correct V2 API structure)
     echo "💱 8. Exchange Rate using DTO\n";
     $rateDTO = GetRateDTO::fromArray([
         'from' => 'USD',
         'to' => 'EUR',
-        'amount' => 1000.00,
-        'precision' => 4
+        'amount' => 1000.00
     ]);
     
     echo "✅ Exchange rate DTO validated\n";

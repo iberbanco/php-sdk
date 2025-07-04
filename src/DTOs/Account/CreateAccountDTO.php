@@ -15,8 +15,12 @@ class CreateAccountDTO extends BaseDTO
     {
         $this->validateRequired($this->getRequiredFields());
 
-        if ($this->user_number && strlen($this->user_number) < 6) {
-            throw ValidationException::minimumValue('user_number', $this->user_number, 6);
+        if ($this->user_number && strlen($this->user_number) > 50) {
+            throw ValidationException::maximumValue('user_number', strlen($this->user_number), 50);
+        }
+        
+        if ($this->user_number && !preg_match('/^[a-zA-Z0-9]+$/', $this->user_number)) {
+            throw ValidationException::invalidFormat('user_number', 'alphanumeric characters only');
         }
 
         if ($this->currency) {

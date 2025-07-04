@@ -5,7 +5,7 @@ namespace Iberbanco\SDK\Config;
 class Configuration
 {
     public const SANDBOX_URL = 'https://sandbox.api.iberbanco.finance/api/v2';
-    public const PRODUCTION_URL = 'https://production.api.iberbancoltd.com/api/v2';
+    public const PRODUCTION_URL = 'http://production.api.iberbancoltd.com/api/v2';
 
     private string $baseUrl;
     private string $username;
@@ -18,12 +18,7 @@ class Configuration
     public function __construct(array $config = [])
     {
         $this->sandbox = $config['sandbox'] ?? true;
-        
-        if (isset($config['base_url'])) {
-            $this->baseUrl = $config['base_url'];
-        } else {
-            $this->baseUrl = $this->sandbox ? self::SANDBOX_URL : self::PRODUCTION_URL;
-        }
+        $this->baseUrl = $this->sandbox ? self::SANDBOX_URL : self::PRODUCTION_URL;
         
         $this->username = $config['username'] ?? '';
         $this->timeout = $config['timeout'] ?? 30;
@@ -123,7 +118,6 @@ class Configuration
     public static function fromEnvironment(): self
     {
         return new self([
-            'base_url' => $_ENV['IBERBANCO_BASE_URL'] ?? null,
             'sandbox' => filter_var($_ENV['IBERBANCO_SANDBOX'] ?? 'true', FILTER_VALIDATE_BOOLEAN),
             'username' => $_ENV['IBERBANCO_USERNAME'] ?? '',
             'timeout' => (int)($_ENV['IBERBANCO_TIMEOUT'] ?? 30),
@@ -150,7 +144,6 @@ class Configuration
     public function toArray(): array
     {
         return [
-            'base_url' => $this->baseUrl,
             'sandbox' => $this->sandbox,
             'username' => $this->username,
             'timeout' => $this->timeout,

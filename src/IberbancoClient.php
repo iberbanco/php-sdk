@@ -158,8 +158,8 @@ class IberbancoClient
     {
         foreach ($config as $key => $value) {
             switch ($key) {
-                case 'base_url':
-                    $this->config->setBaseUrl($value);
+                case 'sandbox':
+                    $this->config->setSandbox($value);
                     break;
                 case 'username':
                     $this->config->setUsername($value);

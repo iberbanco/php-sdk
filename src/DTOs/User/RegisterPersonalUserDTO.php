@@ -11,13 +11,24 @@ class RegisterPersonalUserDTO extends BaseDTO
     public ?string $first_name = null;
     public ?string $last_name = null;
     public ?string $email = null;
-    public ?string $phone = null;
+    public ?string $password = null;
+    public ?string $call_number = null;
     public ?string $date_of_birth = null;
-    public ?array $address = null; // Contains: street, city, state, postal_code, country
-    public ?int $preferred_currency = null;
+    public ?string $citizenship = null;
+    
+    // Flat address fields (matching API structure)
+    public ?string $address = null;
+    public ?string $city = null;
+    public ?string $state_or_province = null;
+    public ?string $post_code = null;
+    public ?string $country = null;
+    
+    public ?array $currencies = null;
+    public ?array $selected_service = null;
+    public ?array $sources_of_wealth = null;
+    public ?bool $is_pep = null;
     public ?bool $terms_accepted = null;
-    public ?bool $marketing_consent = null;
-    public ?string $identity_document_type = null; // passport, national_id, driving_license
+    public ?string $identity_document_type = null;
     public ?string $identity_document_number = null;
 
     public function validate(): void
@@ -39,16 +50,16 @@ class RegisterPersonalUserDTO extends BaseDTO
             ValidationUtils::validateLength($this->email, 1, 255, 'email');
         }
 
-        if ($this->phone) {
-            ValidationUtils::validatePhoneNumber($this->phone);
+        if ($this->call_number) {
+            ValidationUtils::validatePhoneNumber($this->call_number);
         }
 
         if ($this->date_of_birth) {
             ValidationUtils::validateDateOfBirth($this->date_of_birth);
         }
 
-        if ($this->address) {
-            ValidationUtils::validateAddress($this->address);
+        if ($this->citizenship) {
+            ValidationUtils::validateLength($this->citizenship, 2, 2, 'citizenship');
         }
 
         if ($this->identity_document_type && !in_array($this->identity_document_type, ValidationUtils::IDENTITY_DOCUMENT_TYPES)) {
@@ -66,12 +77,11 @@ class RegisterPersonalUserDTO extends BaseDTO
 
     public function getRequiredFields(): array
     {
+        // Basic required fields for card+crypto services
         return [
-            'first_name', 'last_name', 'email', 'date_of_birth', 'address',
-            'preferred_currency', 'terms_accepted', 'identity_document_type',
-            'identity_document_number'
+            'first_name', 'last_name', 'email', 'password', 'call_number',
+            'date_of_birth', 'citizenship', 'address', 'city', 'state_or_province',
+            'post_code', 'country', 'currencies', 'selected_service', 'terms_accepted'
         ];
     }
-
-
 } 

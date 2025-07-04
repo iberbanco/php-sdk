@@ -60,12 +60,12 @@ class ClientTest extends TestCase
 
     public function testConfigurationUpdate(): void
     {
-        $originalBaseUrl = $this->client->getConfig()->getBaseUrl();
+        $this->assertTrue($this->client->getConfig()->isSandbox());
         
-        $this->client->updateConfig(['base_url' => 'https://new.api.com/v2']);
+        $this->client->updateConfig(['sandbox' => false]);
         
-        $this->assertEquals('https://new.api.com/v2', $this->client->getConfig()->getBaseUrl());
-        $this->assertNotEquals($originalBaseUrl, $this->client->getConfig()->getBaseUrl());
+        $this->assertFalse($this->client->getConfig()->isSandbox());
+        $this->assertEquals('http://production.api.iberbancoltd.com/api/v2', $this->client->getConfig()->getBaseUrl());
     }
 
     public function testDebugMode(): void

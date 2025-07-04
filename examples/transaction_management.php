@@ -8,8 +8,10 @@ use Iberbanco\SDK\Exceptions\ValidationException;
 
 // Initialize client
 $client = IberbancoClient::create([
-    'base_url' => 'https://sandbox.api.iberbanco.finance/v2',
-    'username' => 'your_agent_username',
+    'sandbox' => true, // Set to false for production
+    'username' => $_ENV['IBERBANCO_USERNAME'] ?? 'your_agent_username',
+    'verify_ssl' => true,
+    'timeout' => 30,
     'debug' => true // Enable debug mode for detailed logs
 ]);
 

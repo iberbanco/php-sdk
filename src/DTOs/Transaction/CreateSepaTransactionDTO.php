@@ -10,34 +10,45 @@ class CreateSepaTransactionDTO extends BaseDTO
 {
     public ?string $account_number = null;
     public ?float $amount = null;
-    public ?string $recipient_iban = null;
-    public ?string $recipient_name = null;
     public ?string $reference = null;
-    public ?string $description = null;
-    public ?string $currency = null;
+    public ?string $iban_code = null;
+    public ?string $beneficiary_name = null;
+    public ?string $beneficiary_country = null;
+    public ?string $beneficiary_state = null;
+    public ?string $beneficiary_city = null;
+    public ?string $beneficiary_address = null;
+    public ?string $beneficiary_zip_code = null;
+    public ?string $beneficiary_email = null;
+    public ?string $swift_code = null;
+    public ?string $bank_name = null;
+    public ?string $bank_country = null;
+    public ?string $bank_state = null;
+    public ?string $bank_city = null;
+    public ?string $bank_address = null;
+    public ?string $bank_zip_code = null;
 
     public function validate(): void
     {
         $this->validateRequired($this->getRequiredFields());
 
-        if ($this->amount !== null) {
-            $this->validateAmount($this->amount);
+        if ($this->amount !== null && $this->amount < 0.01) {
+            throw ValidationException::minimumValue('amount', $this->amount, 0.01);
         }
 
-        if ($this->recipient_iban) {
-            ValidationUtils::validateIban($this->recipient_iban, 'recipient_iban');
+        if ($this->iban_code) {
+            ValidationUtils::validateIban($this->iban_code, 'iban_code');
+        }
+
+        if ($this->beneficiary_email) {
+            ValidationUtils::validateEmail($this->beneficiary_email);
         }
 
         if ($this->account_number) {
-            ValidationUtils::validateLength($this->account_number, 10, 255, 'account_number');
+            ValidationUtils::validateLength($this->account_number, 1, 255, 'account_number');
         }
 
-        if ($this->recipient_name) {
-            ValidationUtils::validateLength($this->recipient_name, 2, 255, 'recipient_name');
-        }
-
-        if ($this->currency) {
-            $this->validateCurrency($this->currency);
+        if ($this->beneficiary_name) {
+            ValidationUtils::validateLength($this->beneficiary_name, 2, 255, 'beneficiary_name');
         }
     }
 
@@ -46,8 +57,22 @@ class CreateSepaTransactionDTO extends BaseDTO
         return [
             'account_number',
             'amount',
-            'recipient_iban',
-            'recipient_name'
+            'reference',
+            'iban_code',
+            'beneficiary_name',
+            'beneficiary_country',
+            'beneficiary_state',
+            'beneficiary_city',
+            'beneficiary_address',
+            'beneficiary_zip_code',
+            'beneficiary_email',
+            'swift_code',
+            'bank_name',
+            'bank_country',
+            'bank_state',
+            'bank_city',
+            'bank_address',
+            'bank_zip_code'
         ];
     }
 

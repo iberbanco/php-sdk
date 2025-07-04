@@ -67,72 +67,99 @@ class CardService extends AbstractService
 
     private function validateCardCreationData(array $cardData): void
     {
-        $requiredFields = ['user_number', 'account_number'];
+        $requiredFields = [
+            'user_number', 'account_number', 'amount', 'currency',
+            'shipping_address', 'shipping_city', 'shipping_state',
+            'shipping_country_code', 'shipping_post_code', 'delivery_method'
+        ];
         $this->validateRequired($cardData, $requiredFields);
 
-        if (strlen($cardData['user_number']) < 6) {
-            throw ValidationException::minimumValue('user_number', $cardData['user_number'], 6);
+        // Validate user_number (max 50 chars, alphanumeric)
+        if (strlen($cardData['user_number']) > 50) {
+            throw ValidationException::maximumValue('user_number', strlen($cardData['user_number']), 50);
+        }
+        if (!preg_match('/^[a-zA-Z0-9]+$/', $cardData['user_number'])) {
+            throw ValidationException::invalidFormat('user_number', 'alphanumeric characters only');
         }
 
-        if (strlen($cardData['account_number']) < 10) {
-            throw ValidationException::minimumValue('account_number', $cardData['account_number'], 10);
+        // Validate account_number (max 255 chars)
+        if (strlen($cardData['account_number']) > 255) {
+            throw ValidationException::maximumValue('account_number', strlen($cardData['account_number']), 255);
         }
 
-        if (isset($cardData['card_type'])) {
-            $this->validateCardType($cardData['card_type']);
+        // Validate amount (1-5000)
+        if ($cardData['amount'] < 1 || $cardData['amount'] > 5000) {
+            throw ValidationException::range('amount', $cardData['amount'], 1, 5000);
         }
 
-        if (isset($cardData['currency'])) {
-            $this->validateCurrency($cardData['currency']);
+        // Validate currency (1=USD, 2=EUR)
+        if (!in_array($cardData['currency'], [1, 2])) {
+            throw ValidationException::invalidValue('currency', $cardData['currency'], [1, 2]);
         }
 
-        if (isset($cardData['daily_limit']) && $cardData['daily_limit'] < 0) {
-            throw ValidationException::minimumValue('daily_limit', $cardData['daily_limit'], 0);
+        // Validate shipping fields
+        if (strlen($cardData['shipping_address']) > 255) {
+            throw ValidationException::maximumValue('shipping_address', strlen($cardData['shipping_address']), 255);
+        }
+        if (strlen($cardData['shipping_city']) > 100) {
+            throw ValidationException::maximumValue('shipping_city', strlen($cardData['shipping_city']), 100);
+        }
+        if (strlen($cardData['shipping_state']) > 100) {
+            throw ValidationException::maximumValue('shipping_state', strlen($cardData['shipping_state']), 100);
+        }
+        if (strlen($cardData['shipping_country_code']) !== 2) {
+            throw ValidationException::invalidFormat('shipping_country_code', '2-letter country code');
+        }
+        if (strlen($cardData['shipping_post_code']) > 20) {
+            throw ValidationException::maximumValue('shipping_post_code', strlen($cardData['shipping_post_code']), 20);
         }
 
-        if (isset($cardData['monthly_limit']) && $cardData['monthly_limit'] < 0) {
-            throw ValidationException::minimumValue('monthly_limit', $cardData['monthly_limit'], 0);
-        }
-
-        if (isset($cardData['daily_limit']) && isset($cardData['monthly_limit'])) {
-            if ($cardData['monthly_limit'] < $cardData['daily_limit']) {
-                throw ValidationException::invalidValue(
-                    'monthly_limit',
-                    $cardData['monthly_limit'],
-                    ['Monthly limit must be greater than or equal to daily limit']
-                );
-            }
+        // Validate delivery_method
+        if (!in_array($cardData['delivery_method'], ['Standard', 'Registered'])) {
+            throw ValidationException::invalidValue('delivery_method', $cardData['delivery_method'], ['Standard', 'Registered']);
         }
     }
 
     private function validateCardTransactionsRequest(array $requestData): void
     {
-        $requiredFields = ['card_id'];
+        $requiredFields = ['remote_id', 'userNumber', 'san', 'year', 'month'];
         $this->validateRequired($requestData, $requiredFields);
 
-        if (isset($requestData['per_page'])) {
-            $perPage = (int)$requestData['per_page'];
-            if ($perPage < 1 || $perPage > 100) {
-                throw ValidationException::invalidValue('per_page', $perPage, ['1-100']);
-            }
+        // Validate remote_id (max 50 chars)
+        if (strlen($requestData['remote_id']) > 50) {
+            throw ValidationException::maximumValue('remote_id', strlen($requestData['remote_id']), 50);
         }
 
-        if (isset($requestData['date_from']) || isset($requestData['date_to'])) {
-            $this->validateDateRange($requestData);
+        // Validate userNumber (max 50 chars)
+        if (strlen($requestData['userNumber']) > 50) {
+            throw ValidationException::maximumValue('userNumber', strlen($requestData['userNumber']), 50);
+        }
+
+        // Validate san (max 50 chars)
+        if (strlen($requestData['san']) > 50) {
+            throw ValidationException::maximumValue('san', strlen($requestData['san']), 50);
+        }
+
+        // Validate year
+        $currentYear = (int)date('Y');
+        if ($requestData['year'] < 2020 || $requestData['year'] > ($currentYear + 1)) {
+            throw ValidationException::range('year', $requestData['year'], 2020, $currentYear + 1);
+        }
+
+        // Validate month
+        if ($requestData['month'] < 1 || $requestData['month'] > 12) {
+            throw ValidationException::range('month', $requestData['month'], 1, 12);
         }
     }
 
     private function validatePhysicalCardRequest(array $requestData): void
     {
-        $requiredFields = ['card_id', 'delivery_address'];
+        $requiredFields = ['remote_id'];
         $this->validateRequired($requestData, $requiredFields);
 
-        if (isset($requestData['delivery_address'])) {
-            $this->validateDeliveryAddress($requestData['delivery_address']);
-        }
-
-        if (isset($requestData['express_delivery']) && !is_bool($requestData['express_delivery'])) {
-            throw ValidationException::invalidFormat('express_delivery', 'boolean');
+        // Validate remote_id (max 50 chars)
+        if (strlen($requestData['remote_id']) > 50) {
+            throw ValidationException::maximumValue('remote_id', strlen($requestData['remote_id']), 50);
         }
     }
 
@@ -229,12 +256,22 @@ class CardService extends AbstractService
     public function getSupportedCurrencies(): array
     {
         return [
-            840 => 'USD', // US Dollar
-            978 => 'EUR', // Euro
-            826 => 'GBP', // British Pound
-            756 => 'CHF', // Swiss Franc
-            124 => 'CAD', // Canadian Dollar
-            036 => 'AUD', // Australian Dollar
+            1 => 'USD',  // US Dollar
+            2 => 'EUR',  // Euro
+            3 => 'GBP',  // British Pound
+            4 => 'CHF',  // Swiss Franc
+            5 => 'RUB',  // Russian Ruble
+            6 => 'TRY',  // Turkish Lira
+            7 => 'AED',  // UAE Dirham
+            8 => 'CNH',  // Chinese Yuan (Offshore)
+            9 => 'AUD',  // Australian Dollar
+            10 => 'CZK', // Czech Koruna
+            11 => 'PLN', // Polish Zloty
+            12 => 'CAD', // Canadian Dollar
+            13 => 'USDT', // Tether
+            14 => 'HKD', // Hong Kong Dollar
+            15 => 'SGD', // Singapore Dollar
+            16 => 'JPY', // Japanese Yen
         ];
     }
 

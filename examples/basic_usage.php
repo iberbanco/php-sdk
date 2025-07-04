@@ -6,19 +6,23 @@ use Iberbanco\SDK\IberbancoClient;
 use Iberbanco\SDK\Exceptions\ApiException;
 use Iberbanco\SDK\Exceptions\AuthenticationException;
 
-// Create SDK client
+
+// Initialize client
 $client = IberbancoClient::create([
-    'sandbox' => true, // Set to false for production environment
-    'username' => 'your_agent_username', // Replace with your agent username
-    'timeout' => 30,
+    'sandbox' => true, // Set to false for production
+    'username' => $_ENV['IBERBANCO_USERNAME'] ?? 'your_agent_username',
     'verify_ssl' => true,
-    'debug' => false // Set to true for debugging
+    'timeout' => 30,
+    'debug' => false
 ]);
 
 try {
     // 1. Authenticate
     echo "🔐 Authenticating...\n";
-    $authResponse = $client->authenticate('your_agent_username', 'your_password');
+    $client->authenticate(
+        $_ENV['IBERBANCO_USERNAME'] ?? 'your_agent_username', 
+        $_ENV['IBERBANCO_PASSWORD'] ?? 'your_password'
+    );
     echo "✅ Authentication successful! Token: " . substr($client->getAuthToken(), 0, 10) . "...\n\n";
 
     // 2. List users
@@ -36,33 +40,35 @@ try {
     $exchangeRate = $client->exchange()->getConversion('USD', 'EUR', 100.00);
     echo "💰 100 USD = " . ($exchangeRate['data']['converted_amount'] ?? 'N/A') . " EUR\n\n";
 
-    // 5. Create a personal user (example)
-    echo "👤 Creating a new personal user...\n";
-    $newUser = $client->users()->registerPersonal([
-        'email' => 'john.doe.test+' . time() . '@example.com',
-        'password' => 'SecurePassword123!',
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'date_of_birth' => '1990-01-15',
-        'country' => 'US',
-        'citizenship' => 'US',
-        'address' => '123 Main Street',
-        'city' => 'New York',
-        'post_code' => '10001',
-        'call_number' => '+1234567890'
-    ]);
-    echo "✅ User created with number: " . ($newUser['data']['user_number'] ?? 'N/A') . "\n\n";
+    // 5. Note about User Creation
+    echo "👤 Note: User creation requires file uploads and complex validation.\n";
+    echo "📝 For user creation examples, see dedicated user management examples.\n";
+    echo "🔍 Working with existing users instead...\n\n";
+    
+    // For this example, we'll work with existing users
+    $existingUsers = $client->users()->list(['per_page' => 1]);
+    if (!empty($existingUsers['data'])) {
+        $firstUser = $existingUsers['data'][0];
+        echo "✅ Using existing user: " . $firstUser['user_number'] . "\n\n";
+        
+        // Create account for existing user
+        echo "🏦 Creating account for existing user...\n";
+        try {
+            $newAccount = $client->accounts()->create([
+                'user_number' => $firstUser['user_number'],
+                'currency' => 2, // EUR (internal ID) - trying different currency as user might already have USD
+                'reference' => 'Demo EUR Account via SDK'
+            ]);
+            echo "✅ Account created: " . ($newAccount['data']['account_number'] ?? 'N/A') . "\n\n";
+        } catch (\Exception $e) {
+            echo "❌ Account creation failed: " . $e->getMessage() . "\n";
+            echo "💡 Note: User might already have accounts in available currencies.\n\n";
+        }
+    } else {
+        echo "⚠️  No existing users found. Please create a user first.\n\n";
+    }
 
-    // 6. Create account for the user
-    echo "🏦 Creating account for user...\n";
-    $newAccount = $client->accounts()->create([
-        'user_number' => $newUser['data']['user_number'],
-        'currency' => 840, // USD
-        'reference' => 'Primary USD Account'
-    ]);
-    echo "✅ Account created: " . ($newAccount['data']['account_number'] ?? 'N/A') . "\n\n";
-
-    // 7. Export users data
+    // 6. Export users data
     echo "📤 Starting users export...\n";
     $exportJob = $client->export()->users([
         'format' => 'csv',

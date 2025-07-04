@@ -4,23 +4,43 @@ declare(strict_types=1);
 
 date_default_timezone_set('UTC');
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
-define('IBERBANCO_TEST_BASE_URL', 'https://sandbox.api.iberbanco.finance/v2');
-define('IBERBANCO_TEST_USERNAME', 'test_agent');
-define('IBERBANCO_TEST_TOKEN', 'test_token_123456789');
+// Load environment variables if available
+if (file_exists(__DIR__ . '/../.env')) {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+    $dotenv->load();
+}
+
+// Test configuration defaults
+define('IBERBANCO_TEST_CONFIG', [
+    'sandbox' => true,
+    'username' => $_ENV['IBERBANCO_USERNAME'] ?? 'test_agent',
+    'timeout' => 30,
+    'verify_ssl' => false,
+    'debug' => true
+]);
 
 class TestConfig
 {
+    public static function getDefaultConfig(): array
+    {
+        return IBERBANCO_TEST_CONFIG;
+    }
+
+    public static function getSandboxUrl(): string
+    {
+        return 'https://sandbox.api.iberbanco.finance/api/v2';
+    }
+
+    public static function getTestUsername(): string
+    {
+        return IBERBANCO_TEST_CONFIG['username'];
+    }
+
     public static function getConfig(): array
     {
-        return [
-            'base_url' => IBERBANCO_TEST_BASE_URL,
-            'username' => IBERBANCO_TEST_USERNAME,
-            'timeout' => 10,
-            'verify_ssl' => false,
-            'debug' => false
-        ];
+        return IBERBANCO_TEST_CONFIG;
     }
 
     public static function getMockHttpClient(): \Iberbanco\SDK\Http\HttpClientInterface

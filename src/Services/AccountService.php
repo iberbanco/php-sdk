@@ -92,8 +92,12 @@ class AccountService extends AbstractService
         $requiredFields = ['user_number', 'currency'];
         $this->validateRequired($accountData, $requiredFields);
 
-        if (strlen($accountData['user_number']) < 6) {
-            throw ValidationException::minimumValue('user_number', $accountData['user_number'], 6);
+        if (strlen($accountData['user_number']) > 50) {
+            throw ValidationException::maximumValue('user_number', strlen($accountData['user_number']), 50);
+        }
+        
+        if (!preg_match('/^[a-zA-Z0-9]+$/', $accountData['user_number'])) {
+            throw ValidationException::invalidFormat('user_number', 'alphanumeric characters only');
         }
 
         $currency = $accountData['currency'];
@@ -194,16 +198,22 @@ class AccountService extends AbstractService
     public function getSupportedCurrencies(): array
     {
         return [
-            840 => 'USD', // US Dollar
-            978 => 'EUR', // Euro
-            826 => 'GBP', // British Pound
-            756 => 'CHF', // Swiss Franc
-            124 => 'CAD', // Canadian Dollar
-            036 => 'AUD', // Australian Dollar
-            392 => 'JPY', // Japanese Yen
-            752 => 'SEK', // Swedish Krona
-            578 => 'NOK', // Norwegian Krone
-            208 => 'DKK', // Danish Krone
+            1 => 'USD',  // US Dollar
+            2 => 'EUR',  // Euro
+            3 => 'GBP',  // British Pound
+            4 => 'CHF',  // Swiss Franc
+            5 => 'RUB',  // Russian Ruble
+            6 => 'TRY',  // Turkish Lira
+            7 => 'AED',  // UAE Dirham
+            8 => 'CNH',  // Chinese Yuan (Offshore)
+            9 => 'AUD',  // Australian Dollar
+            10 => 'CZK', // Czech Koruna
+            11 => 'PLN', // Polish Zloty
+            12 => 'CAD', // Canadian Dollar
+            13 => 'USDT', // Tether
+            14 => 'HKD', // Hong Kong Dollar
+            15 => 'SGD', // Singapore Dollar
+            16 => 'JPY', // Japanese Yen
         ];
     }
 
