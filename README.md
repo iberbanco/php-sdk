@@ -181,37 +181,6 @@ $personalUser = $client->users()->registerPersonal([
 ]);
 ```
 
-## ⚡ SDK Optimizations
-
-The Iberbanco PHP SDK has been optimized for production use with significant performance and maintainability improvements:
-
-### 🛡️ Enhanced Security & Error Handling
-
-- **3-Layer Authentication**: Token + Timestamp + HMAC-SHA256 signature
-- **Specific Exception Types**: Granular exception hierarchy for better error handling
-- **Validation Feedback**: Clear, actionable error messages with field-specific details
-- **Timeout Protection**: Configurable timeouts with validation (1-300 seconds)
-- **SSL Verification**: Configurable SSL verification for different environments
-
-### 📊 Code Quality Improvements
-
-- **Zero Comments**: Production-clean code without documentation comments
-- **Type Safety**: Strong typing throughout the SDK with nullable parameter fixes
-- **PSR Standards**: Follows PSR-4 autoloading and coding standards
-- **Professional Enums**: Eliminated magic numbers with type-safe enum classes
-- **Better Maintainability**: Centralized utilities and constants for easier updates
-
-### 🚀 Performance Metrics
-
-| Metric | Before | After | Improvement |
-|--------|---------|--------|-------------|
-| Code Duplication | 400+ lines | 0 lines | 100% eliminated |
-| Memory Usage | ~8MB | ~5MB | 37% reduction |
-| Validation Speed | ~15ms | ~3ms | 5x faster |
-| Error Clarity | Generic | Field-specific | 100% improved |
-
-### 💡 Example: Optimized Usage
-
 ```php
 use Iberbanco\SDK\Utils\ValidationUtils;
 use Iberbanco\SDK\Constants\ApiConstants;
@@ -231,13 +200,6 @@ if (Currency::isSupported('USD')) {
     $currencyId = Currency::getIdByCode('USD');
 }
 ```
-
-See `examples/optimized_usage.php` for comprehensive optimization examples.
-
-## 🎯 Professional Enums - No More Magic Numbers
-
-The SDK includes professional enum classes that eliminate magic numbers and provide type safety. Instead of using unclear numeric codes, you can use self-documenting constants.
-
 ### 🔍 Available Enum Classes
 
 #### Currency Enum
@@ -315,46 +277,6 @@ $userData = [
     'email' => 'user@example.com'
 ];
 ```
-
-### 🚀 Enum Benefits
-
-✅ **Type Safety**: IDE autocomplete and compile-time validation  
-✅ **Self-Documenting**: Code is clear without looking up numeric codes  
-✅ **API Consistency**: Perfect match with Iberbanco API backend enums  
-✅ **Zero Breaking Changes**: All existing numeric values still work  
-✅ **Helper Methods**: Additional utility functions for common operations  
-
-### 📊 Before vs After
-
-```php
-// ❌ Before: Magic numbers (unclear, error-prone)
-$data = [
-    'currency' => 840,           // What currency is this?
-    'status' => 2,               // What does 2 mean?
-    'type' => 6                  // Unclear transaction type
-];
-
-// ✅ After: Professional enums (clear, type-safe)
-$data = [
-    'currency' => Currency::USD,                     // Crystal clear!
-    'status' => TransactionStatus::STATUS_APPROVED, // Self-explanatory!
-    'type' => TransactionType::SEPA_TRANSACTION     // Professional!
-];
-```
-
-### 📝 Complete Enum Reference
-
-| Enum Class | Description | Constants |
-|------------|-------------|-----------|
-| `Currency` | 16 supported currencies | USD, EUR, GBP, CHF, RUB, TRY, AED, etc. |
-| `AccountStatus` | Account lifecycle states | REQUESTED, ACTIVE, INACTIVE |
-| `TransactionStatus` | Transaction processing states | NEW, APPROVED, DENIED, PROCESSING, etc. |
-| `TransactionType` | 13 payment types | SWIFT, SEPA, ACH, BACS, CRYPTO, etc. |
-| `CardStatus` | Card states | NEW, ISSUED, ACTIVATED, BLOCKED, etc. |
-| `ClientType` | User classification | PERSONAL_TYPE, BUSINESS_TYPE |
-
-Run `php examples/enum_usage.php` to see all enum functionality in action!
-
 ## 🔧 Using Data Transfer Objects (DTOs)
 
 The SDK now includes comprehensive DTOs (Data Transfer Objects) that provide type safety, validation, and clear documentation of required fields for each API operation.
@@ -819,9 +741,6 @@ composer analyse
 composer cs-check
 ```
 
-## 🎉  Ready
-
-
 ### ✅ **Complete Banking Platform**
 - **80+ Currencies** supported globally
 - **185+ Jurisdictions** for operations  
@@ -831,29 +750,8 @@ composer cs-check
 - **Crypto Transactions**
 - **Export Services** with email delivery
 
-### ✅ **Enterprise-Grade Architecture**
-- **45 PHP Files** - All syntax validated
-- **6 Professional Enums** - Type-safe, self-documenting
-- **15+ Type-Safe DTOs** - Data Transfer Objects with validation
-- **Centralized Validation** - `ValidationUtils` with 15+ validation methods
-- **Memory Caching** - Built-in performance optimization
-- **3-Layer Security** - Token + Timestamp + HMAC-SHA256
-
-### ✅ **Developer Experience**
-- **Zero Magic Numbers** - Professional enum classes
-- **IDE Autocomplete** - Full type safety and hints
-- **Comprehensive Examples** - 6 example files covering all features
-- **Clear Documentation** - Self-documenting code
-- **Backward Compatible** - No breaking changes from previous versions
-
-### ✅ **Performance Optimized**
-- **37% Memory Reduction** (8MB → 5MB)
-- **5x Faster Validation** (15ms → 3ms)
-- **100% Code Duplication Eliminated** (400+ lines removed)
-- **Professional Error Handling** - Field-specific validation messages
-
 ### 🚀 **Ready for:**
-- Production banking applications
+- Banking applications
 - Financial service integrations
 - Multi-currency platforms
 - International payment processing
