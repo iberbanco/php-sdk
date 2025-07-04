@@ -54,19 +54,95 @@ The SDK includes comprehensive example files:
 require_once 'vendor/autoload.php';
 
 use Iberbanco\SDK\IberbancoClient;
-use Iberbanco\SDK\Config\Configuration;
 
-// Initialize configuration
-$config = new Configuration([
-    'base_url' => 'https://sandbox.api.iberbanco.finance/v2',
+// Recommended: Use sandbox boolean for environment switching
+$client = IberbancoClient::create([
+    'sandbox' => true, // Set to false for production
     'username' => 'your_agent_username',
     'timeout' => 30,
     'verify_ssl' => true
 ]);
 
-// Create client instance
-$client = new IberbancoClient($config);
+// Alternative: From environment variables
+$client = IberbancoClient::createFromEnvironment();
 ```
+
+## ⚙️ Configuration Options
+
+The SDK supports multiple configuration approaches for different use cases:
+
+### 🔥 NEW: Environment Switching with Boolean Flag (Recommended)
+
+```php
+// Sandbox environment
+$client = IberbancoClient::create([
+    'sandbox' => true, // Automatically uses sandbox endpoint
+    'username' => 'your_agent_username',
+    'timeout' => 30,
+    'verify_ssl' => true,
+    'debug' => false
+]);
+
+// Production environment
+$client = IberbancoClient::create([
+    'sandbox' => false, // Automatically uses production endpoint
+    'username' => 'your_agent_username',
+    'timeout' => 30,
+    'verify_ssl' => true,
+    'debug' => false
+]);
+```
+
+### Environment Variables Configuration
+
+Set these environment variables and use `createFromEnvironment()`:
+
+```bash
+IBERBANCO_SANDBOX=true                    # true for sandbox, false for production
+IBERBANCO_USERNAME=your_agent_username    # Your agent username
+IBERBANCO_TIMEOUT=30                      # Request timeout in seconds
+IBERBANCO_VERIFY_SSL=true                 # SSL verification (recommended)
+IBERBANCO_DEBUG=false                     # Debug mode
+```
+
+```php
+// Load configuration from environment
+$client = IberbancoClient::createFromEnvironment();
+```
+
+### Available Endpoints
+
+The SDK automatically selects the correct endpoint based on the `sandbox` setting:
+
+- **Sandbox**: `https://sandbox.api.iberbanco.finance/api/v2/`
+- **Production**: `https://production.api.iberbancoltd.com/api/v2/`
+
+### Legacy Configuration (Backward Compatible)
+
+You can still use the manual `base_url` approach for custom endpoints:
+
+```php
+$client = IberbancoClient::create([
+    'base_url' => 'https://sandbox.api.iberbanco.finance/api/v2',
+    'username' => 'your_agent_username',
+    'timeout' => 30,
+    'verify_ssl' => true
+]);
+```
+
+**Note**: When `base_url` is provided, it overrides the automatic sandbox/production selection.
+
+### Configuration Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `sandbox` | boolean | `true` | Environment selector (sandbox/production) |
+| `base_url` | string | auto | Override automatic endpoint selection |
+| `username` | string | required | Your agent username |
+| `timeout` | integer | `30` | Request timeout (1-300 seconds) |
+| `verify_ssl` | boolean | `true` | SSL certificate verification |
+| `debug` | boolean | `false` | Enable debug mode |
+| `headers` | array | `[]` | Additional HTTP headers |
 
 ### Authentication
 

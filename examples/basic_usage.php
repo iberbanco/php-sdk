@@ -8,7 +8,7 @@ use Iberbanco\SDK\Exceptions\AuthenticationException;
 
 // Create SDK client
 $client = IberbancoClient::create([
-    'base_url' => 'https://sandbox.api.iberbanco.finance/v2', // Use sandbox for testing
+    'sandbox' => true, // Set to false for production environment
     'username' => 'your_agent_username', // Replace with your agent username
     'timeout' => 30,
     'verify_ssl' => true,

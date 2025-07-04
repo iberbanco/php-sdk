@@ -4,16 +4,27 @@ namespace Iberbanco\SDK\Config;
 
 class Configuration
 {
+    public const SANDBOX_URL = 'https://sandbox.api.iberbanco.finance/api/v2';
+    public const PRODUCTION_URL = 'https://production.api.iberbancoltd.com/api/v2';
+
     private string $baseUrl;
     private string $username;
     private int $timeout;
     private bool $verifySSL;
     private array $defaultHeaders;
     private bool $debug;
+    private bool $sandbox;
 
     public function __construct(array $config = [])
     {
-        $this->baseUrl = $config['base_url'] ?? 'https://sandbox.api.iberbanco.finance/v2';
+        $this->sandbox = $config['sandbox'] ?? true;
+        
+        if (isset($config['base_url'])) {
+            $this->baseUrl = $config['base_url'];
+        } else {
+            $this->baseUrl = $this->sandbox ? self::SANDBOX_URL : self::PRODUCTION_URL;
+        }
+        
         $this->username = $config['username'] ?? '';
         $this->timeout = $config['timeout'] ?? 30;
         $this->verifySSL = $config['verify_ssl'] ?? true;
@@ -33,6 +44,18 @@ class Configuration
     public function setBaseUrl(string $baseUrl): self
     {
         $this->baseUrl = $baseUrl;
+        return $this;
+    }
+
+    public function isSandbox(): bool
+    {
+        return $this->sandbox;
+    }
+
+    public function setSandbox(bool $sandbox): self
+    {
+        $this->sandbox = $sandbox;
+        $this->baseUrl = $sandbox ? self::SANDBOX_URL : self::PRODUCTION_URL;
         return $this;
     }
 
@@ -100,7 +123,8 @@ class Configuration
     public static function fromEnvironment(): self
     {
         return new self([
-            'base_url' => $_ENV['IBERBANCO_BASE_URL'] ?? 'https://sandbox.api.iberbanco.finance/v2',
+            'base_url' => $_ENV['IBERBANCO_BASE_URL'] ?? null,
+            'sandbox' => filter_var($_ENV['IBERBANCO_SANDBOX'] ?? 'true', FILTER_VALIDATE_BOOLEAN),
             'username' => $_ENV['IBERBANCO_USERNAME'] ?? '',
             'timeout' => (int)($_ENV['IBERBANCO_TIMEOUT'] ?? 30),
             'verify_ssl' => filter_var($_ENV['IBERBANCO_VERIFY_SSL'] ?? 'true', FILTER_VALIDATE_BOOLEAN),
@@ -127,6 +151,7 @@ class Configuration
     {
         return [
             'base_url' => $this->baseUrl,
+            'sandbox' => $this->sandbox,
             'username' => $this->username,
             'timeout' => $this->timeout,
             'verify_ssl' => $this->verifySSL,

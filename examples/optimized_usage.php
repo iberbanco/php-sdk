@@ -19,7 +19,7 @@ try {
     echo "1. Setting up optimized configuration...\n";
     
     $configArray = [
-        'base_url' => getenv('IBERBANCO_BASE_URL') ?: 'https://api.iberbanco.com',
+        'sandbox' => filter_var(getenv('IBERBANCO_SANDBOX') ?: 'true', FILTER_VALIDATE_BOOLEAN),
         'username' => getenv('IBERBANCO_USERNAME') ?: 'your-username',
         'timeout' => ApiConstants::DEFAULT_TIMEOUT,
         'debug' => true
@@ -145,7 +145,7 @@ try {
     
     // Cache some configuration
     $cache->set('api_version', ApiConstants::API_VERSION, 3600); // 1 hour TTL
-    $cache->set('supported_currencies', ValidationUtils::SUPPORTED_CURRENCIES);
+    $cache->set('supported_currencies', \Iberbanco\SDK\Enums\Currency::VALUES);
     
     // Retrieve from cache
     $version = $cache->get('api_version');
